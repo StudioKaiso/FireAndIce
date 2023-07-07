@@ -18,7 +18,7 @@ public class FireBoy :  MonoBehaviour {
     }
 
     private void Update() {
-        if (player.input.FindAction("Move").ReadValue<Vector2>() != Vector2.zero) {
+        if (new Vector3 (player.speed.x, 0.0f, player.speed.z) != Vector3.zero) {
             transform.rotation = Quaternion.RotateTowards(
                 transform.rotation,
                 Quaternion.LookRotation(new Vector3(player.speed.x, 0.0f, player.speed.z), Vector3.up), 

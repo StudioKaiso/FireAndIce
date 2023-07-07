@@ -8,7 +8,7 @@ public class Player : MonoBehaviour {
     //Initialize Variables
     [Header("- Player Variables -")]
     public Vector3 speed;
-    public float moveSpeed, maxSpeed;
+    public float moveSpeed, maxSpeed, turnSpeed;
     [SerializeField] private float jumpSpeed;
     private int jumps;
     [SerializeField] private int maxJumps;
@@ -41,6 +41,10 @@ public class Player : MonoBehaviour {
 
         //Assign components
         rb = GetComponent<Rigidbody>();
+
+        //Hide the cursor
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void FixedUpdate() {
@@ -51,7 +55,10 @@ public class Player : MonoBehaviour {
         switch(state) {
             case State.onGround:
                 //Allow the player to move around while on ground
-                speed = Move(speed, input.FindAction("Move").ReadValue<Vector2>(), moveSpeed, maxSpeed);
+                speed = Vector3.ClampMagnitude(
+                    speed + Move(input.FindAction("Move").ReadValue<Vector2>(), moveSpeed),
+                    maxSpeed
+                );
 
                 //Prevent the player from going through the ground
                 speed.y = Mathf.Clamp(speed.y, 0.0f, 1000.0f);
@@ -72,18 +79,9 @@ public class Player : MonoBehaviour {
     ---------------------------------------------------------- */
 
     //Move a vector Horizontally
-    private Vector3 Move(Vector3 value, Vector2 direction, float intensity, float maxIntensity) {
-        return new Vector3(
-            Mathf.Clamp (
-                value.x + RotateToCamera(direction).x * intensity, 
-                -maxIntensity, maxIntensity
-            ), 
-            value.y,
-            Mathf.Clamp (
-                value.z + RotateToCamera(direction).z * intensity, 
-                -maxIntensity, maxIntensity
-            )
-        );
+    private Vector3 Move(Vector2 direction, float intensity) {
+        return (playerCam.transform.forward * direction.y * intensity) + 
+            (playerCam.transform.right * direction.x * intensity);
     }
 
     //Jump
@@ -98,20 +96,13 @@ public class Player : MonoBehaviour {
         rb.position += speed * Time.deltaTime;
     }
 
-    //Rotate vector to face the camera
-    public Vector3 RotateToCamera(Vector2 direction) {
-        return playerCam.transform.rotation * new Vector3(direction.x, 0.0f, direction.y);
-    }
-
     //Apply Friction
     private void Friction(float intensity) {
-        if (speed.x > 0.001f || speed.x < -0.001f) {
-            speed.x += (-Mathf.Sign(speed.x) * intensity) * Time.deltaTime;
-        }
+        if (speed.x > -0.5f && speed.x < 0.5f) { speed.x = 0.0f; }
+        else { speed.x += (-Mathf.Sign(speed.x) * intensity) * Time.deltaTime; }
 
-        if (speed.z > 0.001f || speed.z < -0.001f) {
-            speed.z += (-Mathf.Sign(speed.z) * intensity) * Time.deltaTime;
-        }
+        if (speed.z > -0.5f && speed.z < 0.5f) { speed.z = 0.0f; }
+        else { speed.z += (-Mathf.Sign(speed.z) * intensity) * Time.deltaTime; }
     }
 
     //Apply Gravity

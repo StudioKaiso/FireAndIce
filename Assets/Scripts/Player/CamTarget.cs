@@ -2,17 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CamTarget : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
-    {
-        
+public class CamTarget : MonoBehaviour {
+    //Initialize Components
+    private Player player;
+
+    private void Start() {
+        //Assign Components
+        player = GetComponentInParent<Player>();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
+    private void FixedUpdate() {
         
     }
 }
