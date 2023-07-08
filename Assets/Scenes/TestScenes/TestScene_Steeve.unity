@@ -133,11 +133,9 @@ GameObject:
   m_Component:
   - component: {fileID: 35279170}
   - component: {fileID: 35279173}
-  - component: {fileID: 35279172}
-  - component: {fileID: 35279171}
   m_Layer: 3
   m_Name: CamTarget
-  m_TagString: Untagged
+  m_TagString: CameraTarget
   m_Icon: {fileID: 7174288486110832750, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -157,56 +155,6 @@ Transform:
   m_Father: {fileID: 416808717}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &35279171
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 35279169}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &35279172
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 35279169}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!114 &35279173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,6 +167,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcab9f95303c9c48b8a95e7c7d72080, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  target: {fileID: 963194227}
 --- !u!1 &301019030
 GameObject:
   m_ObjectHideFlags: 3
@@ -409,20 +358,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: {x: 0, y: 0, z: 0}
-  moveSpeed: 5
+  moveSpeed: 2
   maxSpeed: 10
-  turnSpeed: 50
+  turnSpeed: 750
   jumpSpeed: 25
   maxJumps: 1
-  friction: 25
   state: 0
+  rb: {fileID: 0}
   input:
     m_Name: Input
     m_Id: 36201474-fc63-4343-9803-f55768498e9e
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
-  playerCam: {fileID: 963194227}
+  cameraTarget: {fileID: 0}
 --- !u!54 &416808721
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1266,7 +1215,7 @@ Rigidbody:
   m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 1
+  m_CollisionDetection: 2
 --- !u!1 &1043325917
 GameObject:
   m_ObjectHideFlags: 3
@@ -1463,7 +1412,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1088754432}
-  m_LocalRotation: {x: -0.0062496588, y: 0.000000016989622, z: -0.0000000027225866, w: 0.9999805}
+  m_LocalRotation: {x: -0.0062496588, y: -0.000000016989611, z: 0.0000000027225848, w: 0.9999805}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1864,7 +1813,7 @@ MonoBehaviour:
   m_XAxis:
     Value: 0
     m_SpeedMode: 0
-    m_MaxSpeed: 100
+    m_MaxSpeed: 150
     m_AccelTime: 0.1
     m_DecelTime: 0.1
     m_InputAxisName: Mouse X
@@ -2021,7 +1970,7 @@ GameObject:
   - component: {fileID: 1997172056}
   - component: {fileID: 1997172054}
   m_Layer: 0
-  m_Name: FireBoy
+  m_Name: CharacterMesh
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2079,7 +2028,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 263a09fa46e20c34d969407c7d67dba7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 0}
+  character: {fileID: 0}
 --- !u!1 &2107097187
 GameObject:
   m_ObjectHideFlags: 0
