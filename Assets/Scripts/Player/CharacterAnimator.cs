@@ -9,11 +9,13 @@ public class CharacterAnimator :  MonoBehaviour {
 
     //Initialize Components
     [SerializeField] private Character character;
+    [SerializeField] private Player player;
     private Animator anim;
 
     private void Start() {
         //Assign Components
         character = GetComponentInParent<Character>();
+        player = character.GetComponent<Player>();
         anim = GetComponent<Animator>();
     }
 
@@ -33,15 +35,17 @@ public class CharacterAnimator :  MonoBehaviour {
                 inAir = true;
 
                 //Rotate the character to the direction they are trying to go
-                if (character.GetComponent<Player>() != null) {
-                    Player player = character.GetComponent<Player>();
-
-                    RotateCharacter(new Vector3(
-                        player.input.FindAction("Move").ReadValue<Vector2>().x, 0.0f,
-                        player.input.FindAction("Move").ReadValue<Vector2>().y
-                    ));    
+                if (player != null) {
+                    if (player.input.FindAction("Move").ReadValue<Vector2>() != Vector2.zero) {
+                        RotateCharacter(player.cameraTarget.rotation * 
+                            new Vector3 (
+                                player.input.FindAction("Move").ReadValue<Vector2>().x, 0.0f,
+                                player.input.FindAction("Move").ReadValue<Vector2>().y
+                            )
+                        );
+                    }
                 } else { 
-                    RotateCharacter(transform.parent.forward); 
+                    RotateCharacter(new Vector3(character.speed.x, 0.0f, character.speed.z));
                 }
             break;
         }

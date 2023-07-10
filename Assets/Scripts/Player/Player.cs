@@ -11,7 +11,8 @@ public class Player : Character {
 
     //Initialize Components
     [Header("- Player Components -")]
-    [SerializeField] private Transform cameraTarget;
+    public Transform cameraTarget;
+    public CamTarget cameraTargetComponent;
 
     private void OnEnable() => input.Enable();
     private void OnDisable() => input.Disable();
@@ -20,6 +21,7 @@ public class Player : Character {
         //Assign Components
         if (GameObject.FindGameObjectWithTag("CameraTarget") != null) {
             cameraTarget = GameObject.FindGameObjectWithTag("CameraTarget").transform;
+            cameraTargetComponent = cameraTarget.GetComponent<CamTarget>();
         } else { cameraTarget = Camera.main.transform; }
 
         //Assign inputs
@@ -35,6 +37,9 @@ public class Player : Character {
         //Hide the cursor
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        //Input Events
+        input.FindAction("Jump").started += ctx => Jump(jumpSpeed);
     }
 
     protected override void FixedUpdate() { base.FixedUpdate();
@@ -54,11 +59,18 @@ public class Player : Character {
             case State.inAir:
                 //Allow the player to move around in the air
                 if (canMove) {
-                    speed = Move (speed, cameraTarget, 
-                        input.FindAction("Move").ReadValue<Vector2>(), 
-                        moveSpeed / 2.0f, maxSpeed
-                    );    
+                    speed = new Vector3(
+                        Mathf.Clamp(speed.x, -maxSpeed, maxSpeed), speed.y, 
+                        Mathf.Clamp(speed.z, -maxSpeed, maxSpeed)
+                    ) + Quaternion.LookRotation(cameraTarget.forward) * new Vector3(
+                        input.FindAction("Move").ReadValue<Vector2>().x * (moveSpeed * 20.0f) * Time.deltaTime, 0.0f,
+                        input.FindAction("Move").ReadValue<Vector2>().y * (moveSpeed * 20.0f) * Time.deltaTime
+                    );
                 }
+
+                //Follow the player only when falling
+                if (speed.y > 0) { cameraTargetComponent.followHeight = false; }
+                else { cameraTargetComponent.followHeight = true; }
             break;
         }
     }

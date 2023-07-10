@@ -10,7 +10,8 @@ public class Character : MonoBehaviour {
     [Header("- Character Variables -")]
     public Vector3 speed;
     public float moveSpeed, maxSpeed, turnSpeed;
-    [SerializeField] private float jumpSpeed;
+    [SerializeField] private float airFriction = 5.0f;
+    [SerializeField] protected float jumpSpeed;
     protected int jumps;
     [SerializeField] protected int maxJumps;
     protected float friction;
@@ -42,6 +43,9 @@ public class Character : MonoBehaviour {
             case State.inAir:
                 //Make the player fall down when in the air
                 Gravity();
+
+                //Add friction to the player when in the air
+                Friction(airFriction);
             break;
         }
     }
@@ -63,7 +67,10 @@ public class Character : MonoBehaviour {
 
     //Jump
     protected void Jump(float power) {
-        if (jumps > 0) { speed.y = power; jumps--; }    
+        if (jumps > 0) { 
+            StartCoroutine(ImpulseForce(speed + (Vector3.up * power), 1.0f * Time.deltaTime));
+            jumps--; 
+        }    
     }
 
     /* ----------------------------------------------------------
@@ -85,10 +92,23 @@ public class Character : MonoBehaviour {
     }
 
     //Apply Gravity
-    private void Gravity(float intensity = 30.0f, float scale = 1.0f, float maxIntensity = 50.0f) {
+    private void Gravity(float intensity = 30.0f, float scale = 1.0f, float maxIntensity = 75.0f) {
         if (speed.y >= -maxIntensity) { 
             speed.y -= (intensity * scale) * Time.deltaTime;
         }
+    }
+
+    //Impulse
+    protected IEnumerator ImpulseForce(Vector3 target, float targetTime) {
+        float currentTime = 0;
+        Vector3 startSpeed = speed;
+        Debug.Log("Yes");
+        while (currentTime < targetTime) {
+            Debug.Log("yesLerp");
+            speed = Vector3.Lerp(startSpeed, target, currentTime / targetTime);
+            currentTime += Time.deltaTime;
+            yield return null;
+        } speed = target;
     }
 
     /* ----------------------------------------------------------
