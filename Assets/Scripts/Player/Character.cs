@@ -18,9 +18,9 @@ public class Character : MonoBehaviour {
     protected bool canMove;
 
     //State Machine
-    public enum State { inAir, onGround };
     [Header("- Character State Machine -")]
-    public State state;
+    public Dictionary<string, int> states = new Dictionary<string, int>() { {"inAir", 0}, {"onGround", 1} };
+    public int state;
 
     //Initialize Components
     [Header("- Character Components -")]
@@ -31,23 +31,22 @@ public class Character : MonoBehaviour {
         UpdatePosition();
 
         //Switch between player states
-        switch(state) {
-            case State.onGround:
-                //Prevent the player from going through the ground
-                speed.y = Mathf.Clamp(speed.y, 0.0f, 1000.0f);
+        if (state == states["onGround"]) {
+            //Prevent the player from going through the ground
+            speed.y = Mathf.Clamp(speed.y, 0.0f, 1000.0f);
 
-                //Add friction to the player when on the ground
-                Friction(friction);
-            break;
-
-            case State.inAir:
-                //Make the player fall down when in the air
-                Gravity();
-
-                //Add friction to the player when in the air
-                Friction(airFriction);
-            break;
+            //Add friction to the player when on the ground
+            Friction(friction);
         }
+
+        if (state == states["inAir"]) {
+            //Make the player fall down when in the air
+            Gravity();
+
+            //Add friction to the player when in the air
+            Friction(airFriction);
+        }
+    
     }
 
     /* ----------------------------------------------------------
@@ -68,7 +67,7 @@ public class Character : MonoBehaviour {
     //Jump
     protected void Jump(float power) {
         if (jumps > 0) { 
-            StartCoroutine(ImpulseForce(speed + (Vector3.up * power), 1.0f * Time.deltaTime));
+            StartCoroutine(ImpulseForce(Vector3.up * power, 1.0f * Time.deltaTime));
             jumps--; 
         }    
     }
@@ -102,9 +101,7 @@ public class Character : MonoBehaviour {
     protected IEnumerator ImpulseForce(Vector3 target, float targetTime) {
         float currentTime = 0;
         Vector3 startSpeed = speed;
-        Debug.Log("Yes");
         while (currentTime < targetTime) {
-            Debug.Log("yesLerp");
             speed = Vector3.Lerp(startSpeed, target, currentTime / targetTime);
             currentTime += Time.deltaTime;
             yield return null;
@@ -118,7 +115,7 @@ public class Character : MonoBehaviour {
     private void OnCollisionEnter(Collision col) {
         //Touch the ground
         if (col.collider.tag == "Ground") { 
-            state = State.onGround; 
+            state = states["onGround"]; 
             friction = col.collider.material.staticFriction;
             jumps = maxJumps;
         }
@@ -127,7 +124,7 @@ public class Character : MonoBehaviour {
     private void OnCollisionExit(Collision col) {
         //Get in the air
         if (col.collider.tag == "Ground") {
-            state = State.inAir;
+            state = states["inAir"];
         }
     }
 }

@@ -7,12 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ToonShaderMat
-  m_Shader: {fileID: -6465566751694194690, guid: 36e55d97d58df7e43aee9584bb71b9c4, type: 3}
+  m_Name: OLDOutlineShaderMat
+  m_Shader: {fileID: -6465566751694194690, guid: ad4922a7a47c3234b9ae805baf0daf0c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _OVERLAY
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -37,23 +38,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CelShadingIntensity: 175
-    - _Float: 1.5
-    - _QueueControl: 0
-    - _QueueOffset: 0
-    - _Saturation: 1
-    m_Colors: []
+    - _ColorThreshold: 0.1
+    - _Float: 2
+    - _NormalThreshold: 0.1
+    - _OVERLAY: 1
+    m_Colors:
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
---- !u!114 &7307651417708342331
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  version: 7
