@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,9 +9,17 @@ public class CharacterAnimator :  MonoBehaviour {
     private bool inAir;
 
     //Initialize Components
-    [SerializeField] private Character character;
-    [SerializeField] private Player player;
+    private Character character;
+    private Player player;
     private Animator anim;
+
+    //Initialize Events
+    public delegate void StateSwitch(Transform animator, string state);
+    public static event StateSwitch onStateSwitch;
+
+    private void OnDisable() {
+        onStateSwitch = null;
+    }
 
     private void Start() {
         //Assign Components
@@ -19,7 +28,7 @@ public class CharacterAnimator :  MonoBehaviour {
         anim = GetComponent<Animator>();
 
         //Assign Events
-        Player.onTriggerAnimation += (animation) => anim.Play(animation);
+        Player.onTriggerAnimation += (parent, animation) => { if (transform.parent == parent) anim.Play(animation); };
     }
 
     private void Update() {
@@ -38,17 +47,18 @@ public class CharacterAnimator :  MonoBehaviour {
 
             //Rotate the character to the direction they are trying to go
             if (player != null) {
-                if (player.input.FindAction("Move").ReadValue<Vector2>() != Vector2.zero) {
+                if (player.direction != Vector2.zero) {
                     RotateCharacter(player.cameraTarget.rotation * 
-                        new Vector3 (
-                            player.input.FindAction("Move").ReadValue<Vector2>().x, 0.0f,
-                            player.input.FindAction("Move").ReadValue<Vector2>().y
-                        )
+                        new Vector3 (player.direction.x, 0.0f, player.direction.y)
                     );
                 }
             } else { 
                 RotateCharacter(new Vector3(character.speed.x, 0.0f, character.speed.z));
             }
+        }
+
+        if (character.state == character.states["dodging"]) {
+            RotateCharacter(new Vector3(character.speed.x, 0.0f, character.speed.z), 5.0f);
         }
 
         //Update the animations
@@ -59,11 +69,11 @@ public class CharacterAnimator :  MonoBehaviour {
                            Utility Methods
     ---------------------------------------------------------- */
 
-    private void RotateCharacter(Vector3 target) {
+    private void RotateCharacter(Vector3 target, float scale = 1.0f) {
         if (new Vector3 (character.speed.x, 0.0f, character.speed.z) != Vector3.zero) {
             transform.rotation = Quaternion.RotateTowards(transform.rotation, 
                 Quaternion.LookRotation(target, Vector3.up), 
-                character.turnSpeed * Time.deltaTime
+                character.turnSpeed * scale * Time.deltaTime
             );
         }
     }
@@ -78,5 +88,17 @@ public class CharacterAnimator :  MonoBehaviour {
                 new Vector3(character.speed.x, 0.0f, character.speed.z)) / character.maxSpeed
             )
         ); 
+    }
+
+    private void SwitchToNeutral() {
+        if (inAir) {
+            if (onStateSwitch != null) { onStateSwitch(this.transform, "inAir"); }
+        } else {
+            if (onStateSwitch != null) { onStateSwitch(this.transform, "onGround"); }    
+        }
+    }
+
+    private void SwitchToState(string state) {
+        if (onStateSwitch != null) { onStateSwitch(this.transform, state); }
     }
 }

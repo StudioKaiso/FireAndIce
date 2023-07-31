@@ -9,6 +9,7 @@ public class Character : MonoBehaviour {
     //Initialize Variables
     [Header("- Character Variables -")]
     public Vector3 speed;
+    public Vector2 direction;
     public float moveSpeed, maxSpeed, turnSpeed;
     [SerializeField] private float airFriction = 5.0f;
     [SerializeField] protected float jumpSpeed;
@@ -16,6 +17,7 @@ public class Character : MonoBehaviour {
     [SerializeField] protected int maxJumps;
     protected float friction;
     protected bool canMove;
+    protected bool inAir;
 
     //State Machine
     [Header("- Character State Machine -")]
@@ -31,7 +33,7 @@ public class Character : MonoBehaviour {
         UpdatePosition();
 
         //Switch between player states
-        if (state == states["onGround"]) {
+        if (state == states["onGround"]) { inAir = false;
             //Prevent the player from going through the ground
             speed.y = Mathf.Clamp(speed.y, 0.0f, 1000.0f);
 
@@ -39,7 +41,7 @@ public class Character : MonoBehaviour {
             Friction(friction);
         }
 
-        if (state == states["inAir"]) {
+        if (state == states["inAir"]) { inAir = true;
             //Make the player fall down when in the air
             Gravity();
 
@@ -77,12 +79,12 @@ public class Character : MonoBehaviour {
     ---------------------------------------------------------- */
 
     //Update Player position
-    private void UpdatePosition() {
+    protected void UpdatePosition() {
         rb.position += speed * Time.deltaTime;
     }
 
     //Apply Friction
-    private void Friction(float intensity) {
+    protected void Friction(float intensity) {
         if (speed.x > -0.5f && speed.x < 0.5f) { speed.x = 0.0f; }
         else { speed.x += (-Mathf.Sign(speed.x) * intensity) * Time.deltaTime; }
 
@@ -91,7 +93,7 @@ public class Character : MonoBehaviour {
     }
 
     //Apply Gravity
-    private void Gravity(float intensity = 30.0f, float scale = 1.0f, float maxIntensity = 75.0f) {
+    protected void Gravity(float intensity = 30.0f, float scale = 1.0f, float maxIntensity = 75.0f) {
         if (speed.y >= -maxIntensity) { 
             speed.y -= (intensity * scale) * Time.deltaTime;
         }
