@@ -4,20 +4,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody), typeof(Collider))]
+[RequireComponent(typeof(CharacterController), typeof(Collider))]
 public class Character : MonoBehaviour {
     //Initialize Variables
     [Header("- Character Variables -")]
-    public Vector3 speed;
-    public Vector2 direction;
+    public Transform relativeSpace;
+    public Vector3 hSpeed;
+    public float vSpeed;
+    public Vector3 direction, airDirection;
+
     public float moveSpeed, maxSpeed, turnSpeed;
-    [SerializeField] private float airFriction = 5.0f;
     [SerializeField] protected float jumpSpeed;
     protected int jumps;
     [SerializeField] protected int maxJumps;
+
+    [SerializeField] private float airFriction = 5.0f;
     protected float friction;
     protected bool canMove;
     protected bool inAir;
+
+    [SerializeField] protected LayerMask groundLayer;
+    protected Vector3 groundDirection;
+    [SerializeField] protected Transform normalDirection;
 
     //State Machine
     [Header("- Character State Machine -")]
@@ -26,27 +34,39 @@ public class Character : MonoBehaviour {
 
     //Initialize Components
     [Header("- Character Components -")]
-    [SerializeField] protected Rigidbody rb;
+    [SerializeField] protected CharacterController cc;
+
+    protected virtual void Start() {
+        cc = GetComponent<CharacterController>();
+        if (relativeSpace == null) { relativeSpace = transform; }
+    }
 
     protected virtual void FixedUpdate() {
         //Update Player position
         UpdatePosition();
 
+        //Check for ground collision entries and exits
+        GroundCollisions();
+
         //Switch between player states
-        if (state == states["onGround"]) { inAir = false;
+        if (state == states["onGround"]) { inAir = false; 
+            airDirection = direction;
+
             //Prevent the player from going through the ground
-            speed.y = Mathf.Clamp(speed.y, 0.0f, 1000.0f);
+            // hSpeed.y = Mathf.Clamp(hSpeed.y, 0.0f, 1000.0f);
 
             //Add friction to the player when on the ground
-            Friction(friction);
+            if (direction == Vector3.zero) Friction(friction);
         }
 
         if (state == states["inAir"]) { inAir = true;
             //Make the player fall down when in the air
             Gravity();
-
+            
             //Add friction to the player when in the air
-            Friction(airFriction);
+            if (direction == Vector3.zero) Friction(airFriction);
+            
+            
         }
     
     }
@@ -56,12 +76,12 @@ public class Character : MonoBehaviour {
     ---------------------------------------------------------- */
 
     //Move a vector according to a relative space
-    protected Vector3 Move(Vector3 target, Transform relativeSpace, 
-    Vector2 direction, float intensity, float maxIntensity) {
-        return Vector3.ClampMagnitude(
+    protected Vector3 Move(Vector3 target, Vector3 direction,
+    float intensity, float maxIntensity) {
+        return Vector3.ClampMagnitude (
             target + (
-                (relativeSpace.forward * direction.y * intensity) + 
-                (relativeSpace.right * direction.x * intensity)
+                (normalDirection.up * direction.z * intensity) + 
+                (normalDirection.right * -direction.x * intensity)
             ), maxIntensity
         );
     }
@@ -69,7 +89,7 @@ public class Character : MonoBehaviour {
     //Jump
     protected void Jump(float power) {
         if (jumps > 0) { 
-            StartCoroutine(ImpulseForce(Vector3.up * power, 1.0f * Time.deltaTime));
+            StartCoroutine(ImpulseVertical(power, 1.0f * Time.deltaTime));
             jumps--; 
         }    
     }
@@ -80,53 +100,81 @@ public class Character : MonoBehaviour {
 
     //Update Player position
     protected void UpdatePosition() {
-        rb.position += speed * Time.deltaTime;
+        GetComponent<CharacterController>().Move(new Vector3(hSpeed.x, hSpeed.y + vSpeed, hSpeed.z) * Time.deltaTime);
+        normalDirection.rotation = Quaternion.LookRotation(groundDirection, relativeSpace.forward);
+    }
+
+    private void GroundCollisions() {
+        RaycastHit groundHit;
+        float distance = GetComponent<Collider>().bounds.extents.y * 1.1f;
+        Vector3 origin = new Vector3 (transform.position.x, 
+            transform.position.y + GetComponent<Collider>().bounds.extents.y, 
+            transform.position.z
+        );
+
+        if (Physics.Raycast(origin, Vector3.down, out groundHit, distance, groundLayer)) {
+            //Has touched the ground
+            if (inAir) {
+                jumps = maxJumps;
+                state = states["onGround"];
+                friction = groundHit.collider.material.staticFriction;
+
+                vSpeed = 0;
+            } else {
+                hSpeed.y = 0;
+                if (Mathf.Abs(vSpeed) < 1.0f) {
+                    transform.position = new Vector3(transform.position.x, groundHit.point.y, transform.position.z);    
+                }
+            }
+
+            //Get the Grounds angle
+            groundDirection = groundHit.normal;
+        } else {
+            //Has left the ground
+            if (!inAir) { state = states["inAir"];}
+
+            //Get the Grounds angle
+            groundDirection = relativeSpace.up;
+        }
     }
 
     //Apply Friction
     protected void Friction(float intensity) {
-        if (speed.x > -0.5f && speed.x < 0.5f) { speed.x = 0.0f; }
-        else { speed.x += (-Mathf.Sign(speed.x) * intensity) * Time.deltaTime; }
+        if (hSpeed.x > -0.5f && hSpeed.x < 0.5f) { hSpeed.x = 0.0f; }
+        else { hSpeed.x += (-Mathf.Sign(hSpeed.x) * intensity) * Time.deltaTime; }
+        
+        if (hSpeed.y > -0.5f && hSpeed.y < 0.5f) { hSpeed.y = 0.0f; }
+        else { hSpeed.y += (-Mathf.Sign(hSpeed.y) * intensity) * Time.deltaTime; }
 
-        if (speed.z > -0.5f && speed.z < 0.5f) { speed.z = 0.0f; }
-        else { speed.z += (-Mathf.Sign(speed.z) * intensity) * Time.deltaTime; }
+        if (hSpeed.z > -0.5f && hSpeed.z < 0.5f) { hSpeed.z = 0.0f; }
+        else { hSpeed.z += (-Mathf.Sign(hSpeed.z) * intensity) * Time.deltaTime; }
     }
 
     //Apply Gravity
     protected void Gravity(float intensity = 30.0f, float scale = 1.0f, float maxIntensity = 75.0f) {
-        if (speed.y >= -maxIntensity) { 
-            speed.y -= (intensity * scale) * Time.deltaTime;
+        if (vSpeed >= -maxIntensity) { 
+            vSpeed -= (intensity * scale) * Time.deltaTime;
         }
     }
 
     //Impulse
     protected IEnumerator ImpulseForce(Vector3 target, float targetTime) {
         float currentTime = 0;
-        Vector3 startSpeed = speed;
+        Vector3 startSpeed = hSpeed;
         while (currentTime < targetTime) {
-            speed = Vector3.Lerp(startSpeed, target, currentTime / targetTime);
+            hSpeed = Vector3.Lerp(startSpeed, target, currentTime / targetTime);
             currentTime += Time.deltaTime;
             yield return null;
-        } speed = target;
+        } hSpeed = target;
     }
 
-    /* ----------------------------------------------------------
-                            Collisions
-    ---------------------------------------------------------- */
-
-    private void OnCollisionEnter(Collision col) {
-        //Touch the ground
-        if (col.collider.tag == "Ground") { 
-            state = states["onGround"]; 
-            friction = col.collider.material.staticFriction;
-            jumps = maxJumps;
-        }
-    }
-
-    private void OnCollisionExit(Collision col) {
-        //Get in the air
-        if (col.collider.tag == "Ground") {
-            state = states["inAir"];
-        }
+    protected IEnumerator ImpulseVertical(float target, float targetTime) {
+        float currentTime = 0;
+        float startSpeed = vSpeed;
+        while (currentTime < targetTime) {
+            vSpeed = Mathf.Lerp(startSpeed, target, currentTime / targetTime);
+            currentTime += Time.deltaTime;
+            yield return null;
+        } vSpeed = target;
     }
 }

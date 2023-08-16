@@ -36,7 +36,7 @@ public class CamTarget : MonoBehaviour {
             
             transform.position = new Vector3 (
                 parent.position.x, 
-                Mathf.SmoothDamp(transform.position.y, previousHeight, ref refVelocity, 1.25f), 
+                Mathf.SmoothDamp(transform.position.y, previousHeight, ref refVelocity, .35f), 
                 parent.position.z
             );  
         }

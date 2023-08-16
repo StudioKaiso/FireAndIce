@@ -9,13 +9,13 @@ public class Player : Character {
     [Header("- Player Variables -")]
     public int playerId;
     public int playerCharacter = -1;
+
     [SerializeField] private float dashSpeed;
     [SerializeField] private float dashCooldown;
     [SerializeField] private bool isDashing;
     
     //Initialize Components
     [Header("- Player Components -")]
-    public Transform cameraTarget;
     public CamTarget cameraTargetComponent;
 
     //Input System
@@ -36,15 +36,12 @@ public class Player : Character {
         onPlayerSkill = null;
     }
 
-    private void Start() {
-
-        //Assign Components
-        rb = GetComponent<Rigidbody>();
-
+    protected override void Start() { base.Start();
+        //Define character Relative space
         if (GameObject.FindGameObjectWithTag("CameraTarget") != null) {
-            cameraTarget = GameObject.FindGameObjectWithTag("CameraTarget").transform;
-            cameraTargetComponent = cameraTarget.GetComponent<CamTarget>();
-        } else { cameraTarget = Camera.main.transform; }
+            relativeSpace = GameObject.FindGameObjectWithTag("CameraTarget").transform;
+            cameraTargetComponent = relativeSpace.GetComponent<CamTarget>();
+        } else { relativeSpace = Camera.main.transform; }
 
         //Hide the cursor
         Cursor.lockState = CursorLockMode.Locked;
@@ -71,8 +68,16 @@ public class Player : Character {
         states.Add("attacking", 3);
 
         //Player Input Events
-        input.FindAction("Move").performed += ctx => direction = ctx.ReadValue<Vector2>();
-        input.FindAction("Move").canceled += ctx => direction = Vector2.zero;
+        input.FindAction("Move").performed += ctx => {
+            airDirection = new Vector3(
+                Mathf.Clamp(direction.x + (ctx.ReadValue<Vector2>().x / 2), -1.0f, 1.0f), 0.0f,
+                Mathf.Clamp(direction.z + (ctx.ReadValue<Vector2>().y / 2), -1.0f, 1.0f)
+            );
+
+            direction = new Vector3(ctx.ReadValue<Vector2>().x, 0.0f, ctx.ReadValue<Vector2>().y);
+        };
+
+        input.FindAction("Move").canceled += ctx => direction = Vector3.zero;
 
         input.FindAction("Jump").started += ctx => Jump(jumpSpeed);
 
@@ -95,34 +100,28 @@ public class Player : Character {
         //Specific player behaviour
         if (state == states["onGround"]) {
             //Fix the camera to follow the player
-            cameraTargetComponent.followHeight = true;
+            if (cameraTargetComponent != null) { cameraTargetComponent.followHeight = true; }
 
             //Allow the character to move around
-            if (canMove) {
-                speed = Move(speed, cameraTarget, direction, moveSpeed, maxSpeed);
-            }
+            if (canMove) { hSpeed = Move(hSpeed, direction, moveSpeed, maxSpeed); }
         }
 
         if (state == states["inAir"]) {
             //Allow the character to move around in the air
-            if (canMove) {
-                speed = new Vector3(
-                    Mathf.Clamp(speed.x, -maxSpeed, maxSpeed), speed.y,
-                    Mathf.Clamp(speed.z, -maxSpeed, maxSpeed)
-                ) + Quaternion.LookRotation(cameraTarget.forward) * new Vector3(
-                    direction.x * (moveSpeed * 20.0f) * Time.deltaTime, 0.0f,
-                    direction.y * (moveSpeed * 20.0f) * Time.deltaTime
-                );
-            }
+            if (canMove) { hSpeed = Move(hSpeed, airDirection, moveSpeed, maxSpeed); }
 
             //Follow the player only when falling
-            if (speed.y > 0) { cameraTargetComponent.followHeight = false; }
-            else { cameraTargetComponent.followHeight = true; }
+            if (cameraTargetComponent != null) {
+                if (vSpeed > 0) { cameraTargetComponent.followHeight = false; }
+                else { cameraTargetComponent.followHeight = true; }
+            }
+            
         }
 
         if (state == states["dodging"]) {
             //Remove the ability to dash again during dash
             isDashing = true;
+            vSpeed = 0.0f;
         }
     }
 
@@ -139,15 +138,12 @@ public class Player : Character {
             state = states["dodging"];
             jumps = 0;
 
-            if (direction != Vector2.zero) {
+            if (direction != Vector3.zero) {
                 StartCoroutine(ImpulseForce(
-                    Quaternion.LookRotation(cameraTarget.forward) * new Vector3(
-                        direction.x * dashSpeed, 0.0f,
-                        direction.y * dashSpeed
-                    ), 15.0f * Time.deltaTime)
+                    Quaternion.LookRotation(relativeSpace.forward) * (direction * power), 15.0f * Time.deltaTime)
                 );
             } else {
-                StartCoroutine(ImpulseForce(cameraTarget.forward * dashSpeed, 2.5f * Time.deltaTime));
+                StartCoroutine(ImpulseForce(normalDirection.up * power, 2.5f * Time.deltaTime));
             }
         }
     }

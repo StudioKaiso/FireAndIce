@@ -38,7 +38,7 @@ public class CharacterAnimator :  MonoBehaviour {
             inAir = false;
 
             //Rotate the character to the movement direction
-            RotateCharacter(new Vector3(character.speed.x, 0.0f, character.speed.z));    
+            RotateCharacter(character.hSpeed);    
         }
 
         if (character.state == character.states["inAir"]) { 
@@ -47,18 +47,18 @@ public class CharacterAnimator :  MonoBehaviour {
 
             //Rotate the character to the direction they are trying to go
             if (player != null) {
-                if (player.direction != Vector2.zero) {
-                    RotateCharacter(player.cameraTarget.rotation * 
-                        new Vector3 (player.direction.x, 0.0f, player.direction.y)
+                if (player.direction != Vector3.zero) {
+                    RotateCharacter(player.relativeSpace.rotation * 
+                        new Vector3 (player.direction.x, 0.0f, player.direction.z)
                     );
                 }
             } else { 
-                RotateCharacter(new Vector3(character.speed.x, 0.0f, character.speed.z));
+                RotateCharacter(character.hSpeed);
             }
         }
 
         if (character.state == character.states["dodging"]) {
-            RotateCharacter(new Vector3(character.speed.x, 0.0f, character.speed.z), 5.0f);
+            RotateCharacter(character.hSpeed, 5.0f);
         }
 
         //Update the animations
@@ -70,7 +70,7 @@ public class CharacterAnimator :  MonoBehaviour {
     ---------------------------------------------------------- */
 
     private void RotateCharacter(Vector3 target, float scale = 1.0f) {
-        if (new Vector3 (character.speed.x, 0.0f, character.speed.z) != Vector3.zero) {
+        if (character.hSpeed != Vector3.zero) {
             transform.rotation = Quaternion.RotateTowards(transform.rotation, 
                 Quaternion.LookRotation(target, Vector3.up), 
                 character.turnSpeed * scale * Time.deltaTime
@@ -81,12 +81,10 @@ public class CharacterAnimator :  MonoBehaviour {
     private void HandleAnimation() {
         anim.SetBool("InAir", inAir);
 
-        anim.SetFloat("VertSpeed", character.speed.y);
+        anim.SetFloat("VertSpeed", character.vSpeed);
 
         anim.SetFloat("HorSpeed", Mathf.Lerp(
-            0.0f, 2.0f, Vector3.Magnitude(
-                new Vector3(character.speed.x, 0.0f, character.speed.z)) / character.maxSpeed
-            )
+            0.0f, 2.0f, Vector3.Magnitude( character.hSpeed) / character.maxSpeed)
         ); 
     }
 
